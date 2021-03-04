@@ -1,32 +1,32 @@
+
 'use strict'
 const AWS = require('aws-sdk');
 const uuid = require('uuid');
+
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
-module.exports.createTodo = (event, context, callback) => {
+
+module.exports.createTodo = async event => {
   const datetime = new Date().toISOString();
-  const requestBody = JSON.parse(event.body);
+  const data = JSON.parse(event.body);
   const params = {
     TableName: 'todos',
     Item: {
       id: uuid.v1(),
-      task: requestBody.task,
-      taskDetails: requestBody.taskDetails,
+      task: data.task,
+      taskdetails: data.taskdetails,
       done: false,
       createdAt: datetime,
       updatedAt: datetime
     }
   };
-  dynamoDb.put(params, (error, data) => {
-    if (error) {
-      console.error(error);
-      callback(new Error(error));
-      return;
-    }
-    const response = {
-      statusCode: 201,
-      body: JSON.stringify(requestBody)
-    };
 
-    callback(null, response);
-  });
-}
+  try {
+    await dynamoDb.put(params).promise();
+    return {
+      statusCode: 200,
+      body: JSON.stringify(data),
+    }
+  } catch (error) {
+    console.log(error);
+  }
+};
